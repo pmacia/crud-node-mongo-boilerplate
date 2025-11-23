@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Node.js API Service
+  api:
+    build: ./api
+    container_name: api_service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_URL=mongodb://mongo:27017/crud_db
+    depends_on:
+      - mongo
+    volumes:
+      # Mount the api directory to /app in the container for hot-reloading
+      # We exclude node_modules to use the container's installed dependencies
+      - ./api:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  # MongoDB Service
+  mongo:
+    image: mongo:latest
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      # Persist data to a named volume
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+  # Web Application Service
+  web:
+    build: ./web
+    container_name: web_app
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+# Define named volumes for persistence
+volumes:
+  mongo_data:
+
+# Define a bridge network for communication between services
+networks:
+  app-network:
+    driver: bridge
